@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime Vanguards Gacha Simulator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+            padding: 2rem;
+            box-sizing: border-box;
+            background-image: linear-gradient(135deg, #2b323c, #1a202c);
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+        }
+        .gacha-ui {
+            background-color: #1e2430;
+            border: 2px solid #2d3748;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.5);
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 1.5rem;
+        }
+        .btn-gradient {
+            background-image: linear-gradient(to right, #4c51bf, #6b46c1);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            border: none;
+        }
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+        }
+        .btn-gradient:active {
+            transform: translateY(0);
+            box-shadow: 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .btn-gray {
+            background-color: #4a5568;
+            border: 2px solid #2d3748;
+            transition: background-color 0.2s ease;
+        }
+        .btn-gray:hover {
+            background-color: #636b7c;
+        }
+        .gacha-box {
+            background-color: #2d3748;
+            border: 2px solid #4a5568;
+            padding: 0.5rem;
+            border-radius: 0.75rem;
+        }
+        .unit-card {
+            background-color: #1a202c;
+            border: 2px solid #4a5568;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+        }
+        .unit-image {
+            width: 100%;
+            height: 200px;
+            background-color: #4a5568;
+            border-radius: 0.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            object-fit: contain;
+        }
+        .results-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .results-content {
+            background-color: #1e2430;
+            border: 2px solid #2d3748;
+            border-radius: 1.5rem;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.7);
+        }
+        .results-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        .rarity-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        .rarity-rare { background-color: #4299e1; }
+        .rarity-epic { background-color: #805ad5; }
+        .rarity-legendary { background-color: #ed8936; }
+        .rarity-mythic { background-color: #f6ad55; }
+        .rarity-secret { background-color: #e53e3e; }
+        .rarity-vanguard { background-color: #4fd1c5; }
+        .rarity-exclusive { background-color: #a0aec0; }
+        .rarity-icon-rare { background-color: #4299e1; }
+        .rarity-icon-epic { background-color: #805ad5; }
+        .rarity-icon-legendary { background-color: #ed8936; }
+        .rarity-icon-mythic { background-color: #f6ad55; }
+        .rarity-icon-secret { background-color: #e53e3e; }
+        .rarity-icon-vanguard { background-color: #4fd1c5; }
+        .rarity-icon-exclusive { background-color: #a0aec0; }
+        .summon-btn {
+            background-image: linear-gradient(135deg, #f6ad55, #ed8939);
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            transition: all 0.2s ease;
+        }
+        .summon-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.4);
+        }
+        .summon-btn:active {
+            transform: scale(1.0);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .summon-btn-10x {
+            background-image: linear-gradient(135deg, #805ad5, #6b46c1);
+        }
+        .summon-btn-vanguard {
+            background-image: linear-gradient(135deg, #4fd1c5, #2c7a7b);
+        }
+        .unit-icon-history {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid;
+            margin: 2px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.6rem;
+            color: white;
+            font-weight: bold;
+        }
+        .history-container {
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            align-content: flex-start;
+            overflow-y: auto;
+            max-height: 200px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100">
+    <div class="container mx-auto">
+        <div class="gacha-ui">
+            <div class="flex flex-col space-y-4">
+                <div class="bg-gray-800 p-4 rounded-xl border-2 border-gray-700 shadow-lg">
+                    <h2 class="text-xl font-bold mb-4">Select a Banner</h2>
+                    <div class="space-y-2">
+                        <button id="diavolo-banner" class="banner-btn w-full text-left p-4 rounded-lg bg-gray-700 border-2 border-gray-600 transition-colors duration-200">
+                            <span class="font-semibold text-lg">Diavolo</span>
+                            <span class="text-red-400 text-sm block">NEW!</span>
+                        </button>
+                        <button id="gogeta-banner" class="banner-btn w-full text-left p-4 rounded-lg bg-gray-700 border-2 border-gray-600 transition-colors duration-200">
+                            <span class="font-semibold text-lg">Gogeta</span>
+                            <span class="text-red-400 text-sm block">NEW!</span>
+                        </button>
+                        <button id="kaguya-banner" class="banner-btn w-full text-left p-4 rounded-lg bg-gray-700 border-2 border-gray-600 transition-colors duration-200">
+                            <span class="font-semibold text-lg">Kaguya</span>
+                            <span class="text-red-400 text-sm block">NEW!</span>
+                        </button>
+                        <button id="escanor-banner" class="banner-btn w-full text-left p-4 rounded-lg border-4 border-purple-500 bg-purple-900 cursor-pointer transition-colors duration-200">
+                            <span class="font-semibold text-lg">Escanor</span>
+                            <span class="text-red-400 text-sm block">NEW!</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl border-2 border-gray-700 shadow-lg">
+                    <h2 class="text-xl font-bold mb-4">Rarity & Summon Counts</h2>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold">Vanguard</span>
+                            <span id="vanguard-count" class="font-mono text-teal-400">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold">Secret</span>
+                            <span id="secret-count" class="font-mono text-red-400">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold">Exclusive</span>
+                            <span id="exclusive-count" class="font-mono text-gray-300">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold">Mythic</span>
+                            <span id="mythic-count" class="font-mono text-orange-400">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold">Legendary</span>
+                            <span id="legendary-count" class="font-mono text-yellow-400">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold">Epic</span>
+                            <span id="epic-count" class="font-mono text-purple-400">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold">Rare</span>
+                            <span id="rare-count" class="font-mono text-blue-400">0</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-2 border-t border-gray-700 mt-2">
+                            <span class="font-semibold">Total Summons</span>
+                            <span id="total-summons-count" class="font-mono text-gray-400">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-col items-center p-6 bg-gray-800 rounded-xl border-2 border-gray-700 shadow-lg relative">
+                <div class="w-full flex justify-between text-sm mb-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-semibold">EXCLUSIVE PITY</span>
+                        <span id="exclusive-pity" class="px-2 py-1 bg-gray-700 rounded-full">0/400</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-semibold">VANGUARD PITY</span>
+                        <span id="vanguard-pity" class="px-2 py-1 bg-gray-700 rounded-full">0/20000</span>
+                    </div>
+                </div>
+                <div class="w-full text-center mb-4">
+                    <h1 class="text-3xl font-extrabold tracking-wide mb-2">SUMMON</h1>
+                    <div class="bg-gray-700 p-4 rounded-xl shadow-inner">
+                        <h3 id="banner-title" class="text-xl font-bold">Escanor Banner</h3>
+                        <p class="text-sm text-gray-400">Vanguard rarity guaranteed in <span class="font-bold text-red-400">20000</span> summons</p>
+                    </div>
+                </div>
+                <div class="flex justify-center space-x-4 mb-8 w-full">
+                    <div class="w-1/3 text-center">
+                        <div class="relative bg-gray-700 rounded-xl p-2 shadow-inner">
+                            <div class="unit-image bg-gray-600">
+                                <span class="text-sm text-gray-400">Unit Placeholder</span>
+                            </div>
+                            <p class="mt-2 text-sm font-semibold">Random Unit</p>
+                        </div>
+                    </div>
+                    <div class="w-1/3 text-center">
+                        <div class="relative bg-gray-700 rounded-xl p-2 shadow-inner">
+                            <img id="featured-unit" class="unit-image bg-gray-600" src="images/image_ef57a0.jpg" alt="Featured Unit Image">
+                            <p class="mt-2 text-sm font-semibold text-red-400">[FEATURED]</p>
+                            <p id="featured-unit-name" class="font-bold text-lg">Escanor</p>
+                        </div>
+                    </div>
+                    <div class="w-1/3 text-center">
+                        <div class="relative bg-gray-700 rounded-xl p-2 shadow-inner">
+                            <div class="unit-image bg-gray-600">
+                                <span class="text-sm text-gray-400">Unit Placeholder</span>
+                            </div>
+                            <p class="mt-2 text-sm font-semibold">Random Unit</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="w-full flex justify-center space-x-4 mb-4">
+                    <button id="summon-1x" class="w-full py-3 px-6 rounded-full font-bold text-lg summon-btn hover:shadow-xl transition-transform">
+                        SUMMON 1X (150 Iced Tea)
+                    </button>
+                    <button id="summon-10x" class="w-full py-3 px-6 rounded-full font-bold text-lg summon-btn summon-btn-10x hover:shadow-xl transition-transform">
+                        SUMMON 10X (1500 Iced Tea)
+                    </button>
+                </div>
+                <div class="w-full flex justify-center mb-4">
+                    <button id="auto-summon-vanguard" class="w-full py-3 px-6 rounded-full font-bold text-lg summon-btn summon-btn-vanguard hover:shadow-xl transition-transform">
+                        AUTO-SUMMON FOR VANGUARD
+                    </button>
+                </div>
+                <div class="w-full text-center mt-2 text-sm text-gray-500">
+                    <p>TIME UNTIL NEXT BANNER: <span class="font-mono">00:06:20</span></p>
+                </div>
+            </div>
+            <div class="flex flex-col space-y-4">
+                <div class="p-4 rounded-xl border-2 border-gray-700 bg-gray-800 shadow-lg">
+                    <h2 class="text-xl font-bold mb-4">Your Currencies</h2>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-semibold">Wisps:</span>
+                        <span id="wisps-count" class="font-bold text-lg text-yellow-400">0</span>
+                    </div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-semibold">Presents:</span>
+                        <span id="presents-count" class="font-bold text-lg text-yellow-400">0</span>
+                    </div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-semibold">Flowers:</span>
+                        <span id="flowers-count" class="font-bold text-lg text-yellow-400">0</span>
+                    </div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-semibold">Iced Tea:</span>
+                        <span id="iced-tea-count" class="font-bold text-lg text-yellow-400">0</span>
+                    </div>
+                    <button id="buy-all-currency" class="w-full mt-4 py-3 rounded-full btn-gradient font-bold text-lg shadow-lg">Buy All</button>
+                </div>
+                <div id="featured-packs-container" class="p-4 rounded-xl border-2 border-gray-700 bg-gray-800 shadow-lg flex-grow">
+                    <h2 class="text-xl font-bold mb-4">Featured Packs</h2>
+                    <div id="featured-packs-list" class="space-y-4">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-8 p-4 bg-gray-800 rounded-xl border-2 border-gray-700 shadow-lg">
+            <h2 class="text-xl font-bold mb-4">Summon History</h2>
+            <div id="summon-history" class="history-container flex">
+            </div>
+        </div>
+    </div>
+    <div id="results-modal" class="results-modal hidden">
+        <div class="results-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Summon Results</h2>
+                <button id="close-modal" class="text-4xl text-gray-400 hover:text-white">&times;</button>
+            </div>
+            <div id="results-list" class="space-y-2">
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const rarityCountsEl = {
+                'vanguard': document.getElementById('vanguard-count'),
+                'secret': document.getElementById('secret-count'),
+                'exclusive': document.getElementById('exclusive-count'),
+                'mythic': document.getElementById('mythic-count'),
+                'legendary': document.getElementById('legendary-count'),
+                'epic': document.getElementById('epic-count'),
+                'rare': document.getElementById('rare-count')
+            };
+            const totalSummonsCountEl = document.getElementById('total-summons-count');
+            const wispsCountEl = document.getElementById('wisps-count');
+            const presentsCountEl = document.getElementById('presents-count');
+            const flowersCountEl = document.getElementById('flowers-count');
+            const icedTeaCountEl = document.getElementById('iced-tea-count');
+            const exclusivePityEl = document.getElementById('exclusive-pity');
+            const vanguardPityEl = document.getElementById('vanguard-pity');
+            const summon1xBtn = document.getElementById('summon-1x');
+            const summon10xBtn = document.getElementById('summon-10x');
+            const autoSummonBtn = document.getElementById('auto-summon-vanguard');
+            const buyAllCurrencyBtn = document.getElementById('buy-all-currency');
+            const featuredUnitEl = document.getElementById('featured-unit');
+            const featuredUnitNameEl = document.getElementById('featured-unit-name');
+            const bannerTitleEl = document.getElementById('banner-title');
+            const resultsModal = document.getElementById('results-modal');
+            const resultsList = document.getElementById('results-list');
+            const closeModalBtn = document.getElementById('close-modal');
+            const summonHistoryEl = document.getElementById('summon-history');
+            const featuredPacksList = document.getElementById('featured-packs-list');
+            const bannerButtons = document.querySelectorAll('.banner-btn');
+            let totalPullCount = 0;
+            let currentBanner = 'escanor';
+            let autoSummonInterval = null;
+            let inventory = {
+                'Rare': 0, 'Epic': 0, 'Legendary': 0, 'Mythic': 0, 'Exclusive': 0, 'Secret': 0, 'Vanguard': 0
+            };
+            const icedTeaPacks = [
+                { id: 'icedtea-25k', name: '25000 Iced Tea', cost: 25000, currency: 'icedTea' },
+                { id: 'icedtea-50k', name: '50000 Iced Tea', cost: 50000, currency: 'icedTea' },
+                { id: 'icedtea-100k', name: '100000 Iced Tea', cost: 100000, currency: 'icedTea' },
+                { id: 'icedtea-1m', name: '1000000 Iced Tea', cost: 1000000, currency: 'icedTea' },
+            ];
+            const wispsPacks = [
+                { id: 'wisps-25k', name: '25000 Wisps', cost: 25000, currency: 'wisps' },
+                { id: 'wisps-50k', name: '50000 Wisps', cost: 50000, currency: 'wisps' },
+                { id: 'wisps-100k', name: '100000 Wisps', cost: 100000, currency: 'wisps' },
+                { id: 'wisps-1m', name: '1000000 Wisps', cost: 1000000, currency: 'wisps' },
+            ];
+            const presentsPacks = [
+                { id: 'presents-25k', name: '25000 Presents', cost: 25000, currency: 'presents' },
+                { id: 'presents-50k', name: '50000 Presents', cost: 50000, currency: 'presents' },
+                { id: 'presents-100k', name: '100000 Presents', cost: 100000, currency: 'presents' },
+                { id: 'presents-1m', name: '1000000 Presents', cost: 1000000, currency: 'presents' },
+            ];
+            const flowersPacks = [
+                { id: 'flowers-25k', name: '25000 Flowers', cost: 25000, currency: 'flowers' },
+                { id: 'flowers-50k', name: '50000 Flowers', cost: 50000, currency: 'flowers' },
+                { id: 'flowers-100k', name: '100000 Flowers', cost: 100000, currency: 'flowers' },
+                { id: 'flowers-1m', name: '1000000 Flowers', cost: 1000000, currency: 'flowers' },
+            ];
+            const bannerPacks = {
+                escanor: icedTeaPacks,
+                diavolo: wispsPacks,
+                gogeta: presentsPacks,
+                kaguya: flowersPacks
+            };
+            const banners = {
+                escanor: {
+                    name: 'Escanor',
+                    cost: 150,
+                    currency: 'icedTea',
+                    rates: {
+                        'Rare': 79.995,
+                        'Epic': 16,
+                        'Legendary': 2,
+                        'Mythic': 1,
+                        'Exclusive': 0.5,
+                        'Secret': 0.5,
+                        'Vanguard': 0.005
+                    },
+                    pity: {
+                        exclusive: 400,
+                        vanguard: 20000
+                    },
+                    currentPity: {
+                        exclusive: 0,
+                        vanguard: 0
+                    },
+                    featuredUnitPath: 'images/image_ef57a0.jpg'
+                },
+                diavolo: {
+                    name: 'Diavolo',
+                    cost: 100,
+                    currency: 'wisps',
+                    rates: {
+                        'Rare': 79.995,
+                        'Epic': 16,
+                        'Legendary': 2,
+                        'Mythic': 1,
+                        'Exclusive': 0.5,
+                        'Secret': 0.5,
+                        'Vanguard': 0.005
+                    },
+                    pity: {
+                        exclusive: 400,
+                        vanguard: 20000
+                    },
+                    currentPity: {
+                        exclusive: 0,
+                        vanguard: 0
+                    },
+                    featuredUnitPath: 'images/image_f9d7e1.png'
+                },
+                gogeta: {
+                    name: 'Gogeta',
+                    cost: 200,
+                    currency: 'presents',
+                    rates: {
+                        'Rare': 79.995,
+                        'Epic': 16,
+                        'Legendary': 2,
+                        'Mythic': 1,
+                        'Exclusive': 0.5,
+                        'Secret': 0.5,
+                        'Vanguard': 0.005
+                    },
+                    pity: {
+                        exclusive: 400,
+                        vanguard: 20000
+                    },
+                    currentPity: {
+                        exclusive: 0,
+                        vanguard: 0
+                    },
+                    featuredUnitPath: 'images/image_fac429.png'
+                },
+                kaguya: {
+                    name: 'Kaguya',
+                    cost: 50,
+                    currency: 'flowers',
+                    rates: {
+                        'Rare': 79.995,
+                        'Epic': 16,
+                        'Legendary': 2,
+                        'Mythic': 1,
+                        'Exclusive': 0.5,
+                        'Secret': 0.5,
+                        'Vanguard': 0.005
+                    },
+                    pity: {
+                        exclusive: 400,
+                        vanguard: 20000
+                    },
+                    currentPity: {
+                        exclusive: 0,
+                        vanguard: 0
+                    },
+                    featuredUnitPath: 'images/kaguya.jpg'
+                }
+            };
+            const rarityColors = {
+                'Rare': 'bg-blue-900 text-blue-400',
+                'Epic': 'bg-purple-900 text-purple-400',
+                'Legendary': 'bg-yellow-900 text-yellow-400',
+                'Mythic': 'bg-orange-900 text-orange-400',
+                'Exclusive': 'bg-gray-800 text-gray-300 border-2 border-gray-600',
+                'Secret': 'bg-red-900 text-red-400 animate-pulse',
+                'Vanguard': 'bg-teal-900 text-teal-400 animate-pulse-slow'
+            };
+            const rarityIcons = {
+                'Rare': 'R', 'Epic': 'E', 'Legendary': 'L', 'Mythic': 'M', 'Exclusive': 'X', 'Secret': 'S', 'Vanguard': 'V'
+            };
+            const currencyCounts = {
+                wisps: 50000,
+                presents: 50000,
+                flowers: 50000,
+                icedTea: 50000
+            };
+            const updateUI = () => {
+                const banner = banners[currentBanner];
+                totalSummonsCountEl.textContent = totalPullCount;
+                wispsCountEl.textContent = currencyCounts.wisps;
+                presentsCountEl.textContent = currencyCounts.presents;
+                flowersCountEl.textContent = currencyCounts.flowers;
+                icedTeaCountEl.textContent = currencyCounts.icedTea;
+                exclusivePityEl.textContent = `${banner.currentPity.exclusive}/${banner.pity.exclusive}`;
+                vanguardPityEl.textContent = `${banner.currentPity.vanguard}/${banner.pity.vanguard}`;
+                summon1xBtn.textContent = `SUMMON 1X (${banner.cost} ${banner.currency.charAt(0).toUpperCase() + banner.currency.slice(1)})`;
+                summon10xBtn.textContent = `SUMMON 10X (${banner.cost * 10} ${banner.currency.charAt(0).toUpperCase() + banner.currency.slice(1)})`;
+                summon1xBtn.disabled = currencyCounts[banner.currency] < banner.cost;
+                summon10xBtn.disabled = currencyCounts[banner.currency] < banner.cost * 10;
+                [summon1xBtn, summon10xBtn].forEach(btn => {
+                    if (btn.disabled) {
+                        btn.classList.add('bg-gray-500', 'cursor-not-allowed');
+                        btn.classList.remove('summon-btn', 'summon-btn-10x');
+                    } else {
+                        btn.classList.remove('bg-gray-500', 'cursor-not-allowed');
+                        if (btn.id === 'summon-1x') {
+                            btn.classList.add('summon-btn');
+                        } else if (btn.id === 'summon-10x') {
+                            btn.classList.add('summon-btn', 'summon-btn-10x');
+                        }
+                    }
+                });
+                bannerTitleEl.textContent = `${banner.name} Banner`;
+                featuredUnitNameEl.textContent = banner.name;
+                featuredUnitEl.src = banner.featuredUnitPath;
+                for (const rarity in inventory) {
+                    const countEl = rarityCountsEl[rarity.toLowerCase()];
+                    if (countEl) {
+                        countEl.textContent = inventory[rarity];
+                    }
+                }
+                featuredPacksList.innerHTML = '';
+                const currentPacks = bannerPacks[currentBanner];
+                currentPacks.forEach(createPackElement);
+            };
+            const getRandomItem = (bannerRates) => {
+                const rand = Math.random() * 100;
+                let cumulativeRate = 0;
+                for (const rarity in bannerRates) {
+                    cumulativeRate += bannerRates[rarity];
+                    if (rand < cumulativeRate) {
+                        return rarity;
+                    }
+                }
+                return 'Rare';
+            };
+            const addSummonToHistory = (rarity) => {
+                const icon = document.createElement('div');
+                icon.classList.add('unit-icon-history', `rarity-icon-${rarity.toLowerCase()}`);
+                icon.textContent = rarityIcons[rarity];
+                icon.title = rarity;
+                summonHistoryEl.prepend(icon);
+            };
+            const performSummon = (count) => {
+                const banner = banners[currentBanner];
+                const cost = banner.cost * count;
+                if (currencyCounts[banner.currency] < cost) {
+                    return;
+                }
+                currencyCounts[banner.currency] -= cost;
+                totalPullCount += count;
+                const results = [];
+                let vanguardPulled = false;
+                for (let i = 0; i < count; i++) {
+                    banner.currentPity.exclusive++;
+                    banner.currentPity.vanguard++;
+                    let rarity = getRandomItem(banner.rates);
+                    if (banner.currentPity.exclusive >= banner.pity.exclusive) {
+                        rarity = 'Exclusive';
+                        banner.currentPity.exclusive = 0;
+                    } else if (banner.currentPity.vanguard >= banner.pity.vanguard) {
+                        rarity = 'Vanguard';
+                        banner.currentPity.vanguard = 0;
+                        vanguardPulled = true;
+                    }
+                    addSummonToHistory(rarity);
+                    results.push(rarity);
+                    inventory[rarity] = (inventory[rarity] || 0) + 1;
+                }
+                updateUI();
+                if (vanguardPulled) {
+                    showResults(results);
+                }
+            };
+            const showResults = (results) => {
+                resultsList.innerHTML = '';
+                results.forEach(rarity => {
+                    const resultItem = document.createElement('div');
+                    resultItem.classList.add('results-item');
+                    resultItem.innerHTML = `
+                        <div class="rarity-color ${rarityColors[rarity].split(' ')[0].replace('bg-', 'bg-')}"></div>
+                        <span class="text-white">${rarity}</span>
+                    `;
+                    resultsList.appendChild(resultItem);
+                });
+                resultsModal.classList.remove('hidden');
+            };
+            const toggleAutoSummon = () => {
+                if (autoSummonInterval) {
+                    clearInterval(autoSummonInterval);
+                    autoSummonInterval = null;
+                    autoSummonBtn.textContent = 'AUTO-SUMMON FOR VANGUARD';
+                } else {
+                    autoSummonInterval = setInterval(() => {
+                        performSummon(1);
+                        if (inventory['Vanguard'] > 0 || currencyCounts[banners[currentBanner].currency] < banners[currentBanner].cost) {
+                            clearInterval(autoSummonInterval);
+                            autoSummonInterval = null;
+                            autoSummonBtn.textContent = 'AUTO-SUMMON FOR VANGUARD';
+                        }
+                    }, 50);
+                    autoSummonBtn.textContent = 'STOP AUTO-SUMMON';
+                }
+            };
+            const createPackElement = (pack) => {
+                const packElement = document.createElement('div');
+                packElement.id = pack.id;
+                packElement.classList.add('flex', 'items-center', 'space-x-4', 'p-4', 'bg-gray-700', 'rounded-lg', 'border', 'border-gray-600', 'hover:bg-gray-600', 'transition-colors');
+                packElement.innerHTML = `
+                    <div class="flex-1">
+                        <h3 class="font-bold text-lg">${pack.name}</h3>
+                    </div>
+                    <button class="py-2 px-4 rounded-full bg-blue-500 hover:bg-blue-600 font-bold text-sm shadow-md transition-colors">Buy</button>
+                `;
+                packElement.addEventListener('click', () => {
+                    currencyCounts[pack.currency] += pack.cost;
+                    console.log(`Claimed ${pack.name}.`);
+                    updateUI();
+                });
+                featuredPacksList.appendChild(packElement);
+            };
+            summon1xBtn.addEventListener('click', () => performSummon(1));
+            summon10xBtn.addEventListener('click', () => performSummon(10));
+            autoSummonBtn.addEventListener('click', toggleAutoSummon);
+            buyAllCurrencyBtn.addEventListener('click', () => {
+                for (let key in currencyCounts) {
+                    currencyCounts[key] += 50000;
+                }
+                updateUI();
+            });
+            bannerButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    banners[currentBanner].currentPity.exclusive = parseInt(exclusivePityEl.textContent.split('/')[0]);
+                    banners[currentBanner].currentPity.vanguard = parseInt(vanguardPityEl.textContent.split('/')[0]);
+                    bannerButtons.forEach(b => {
+                        b.classList.remove('border-4', 'border-purple-500', 'bg-purple-900');
+                        b.classList.add('bg-gray-700', 'border-2', 'border-gray-600');
+                    });
+                    btn.classList.remove('bg-gray-700', 'border-2', 'border-gray-600');
+                    btn.classList.add('border-4', 'border-purple-500', 'bg-purple-900');
+                    currentBanner = btn.id.replace('-banner', '');
+                    updateUI();
+                });
+            });
+            closeModalBtn.addEventListener('click', () => {
+                resultsModal.classList.add('hidden');
+            });
+            updateUI();
+        });
+    </script>
+</body>
+</html>
